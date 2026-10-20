@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SAYURI MINI · Interstellar Quantum Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Teko:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Three.js 3D WebGL Engine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+/* ────────────── ADVANCED CINEMATIC SCI-FI ────────────── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+:root{
+  --cyan:#00f2fe;
+  --cyan-glow:rgba(0, 242, 254, 0.65);
+  --ice-blue:#4facfe;
+  --plasma:#7c4dff;
+  --alert:#ff1744;
+  --f-tech:'Share Tech Mono', monospace;
+  --f-head:'Teko', sans-serif;
+  --f-ui:'Rajdhani', sans-serif;
+}
+
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#000003;
+  color:#fff;
+  font-family:var(--f-ui);
+  perspective:1200px;
+}
+
+/* 3D WebGL Canvas Layer */
+#webgl-canvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+}
+
+/* Real Anamorphic Lens Flare Burst */
+#anamorphic-flash{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(0,242,254,0.9) 25%, rgba(124,77,255,0.4) 60%, transparent 100%);
+  z-index:90;
+  opacity:0;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  transition:opacity 0.08s ease-out;
+}
+
+/* Cinematic Vignette & Grain */
+.cinematic-overlay{
+  position:fixed;
+  inset:0;
+  background:linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+             radial-gradient(circle at center, transparent 35%, rgba(0,0,3,0.7) 85%, #000003 100%);
+  background-size:100% 3px, 100% 100%;
+  z-index:5;
+  pointer-events:none;
+}
+
+/* ────────────── 3D HOLOGRAPHIC TACTICAL TERMINAL ────────────── */
+.hud-viewport{
+  position:relative;
+  z-index:20;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 16px;
+  pointer-events:none;
+  transform-style:preserve-3d;
+}
+
+.holo-terminal{
+  pointer-events:auto;
+  width:100%;
+  max-width:460px;
+  background:linear-gradient(145deg, rgba(6, 14, 32, 0.75) 0%, rgba(2, 6, 18, 0.9) 100%);
+  backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(0, 242, 254, 0.4);
+  border-radius:18px;
+  padding:28px 24px;
+  box-shadow:0 0 50px rgba(0, 242, 254, 0.18), 0 35px 80px rgba(0,0,0,0.9), inset 0 0 25px rgba(0, 242, 254, 0.08);
+  position:relative;
+  transform-style:preserve-3d;
+  opacity:0;
+  transform:translateZ(-120px) rotateX(12deg);
+  transition:opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.holo-terminal.booted{
+  opacity:1;
+  transform:translateZ(0) rotateX(0deg);
+}
+
+/* Tactical Corner Accents */
+.terminal-corner{
+  position:absolute;
+  width:14px;
+  height:14px;
+  border-color:var(--cyan);
+  border-style:solid;
+  pointer-events:none;
+}
+.tc-tl{top:-1px;left:-1px;border-width:2px 0 0 2px;border-top-left-radius:18px;}
+.tc-tr{top:-1px;right:-1px;border-width:2px 2px 0 0;border-top-right-radius:18px;}
+.tc-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;border-bottom-left-radius:18px;}
+.tc-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-bottom-right-radius:18px;}
+
+/* Header */
+.terminal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid rgba(0, 242, 254, 0.2);
+  padding-bottom:12px;
+  margin-bottom:18px;
+}
+.telemetry-tag{
+  font-family:var(--f-tech);
+  font-size:0.72rem;
+  color:var(--cyan);
+  letter-spacing:1px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.pulse-orb{
+  width:7px;height:7px;
+  background:var(--cyan);
+  border-radius:50%;
+  box-shadow:0 0 10px var(--cyan);
+  animation:orbPulse 1.8s infinite;
+}
+@keyframes orbPulse{0%,100%{opacity:0.4;transform:scale(0.85);}50%{opacity:1;transform:scale(1.15);}}
+
+.sys-id{
+  font-family:var(--f-tech);
+  font-size:0.65rem;
+  color:#64748b;
+  letter-spacing:1.5px;
+}
+
+/* Typography */
+.terminal-title{
+  font-family:var(--f-head);
+  font-size:clamp(2rem, 7vw, 2.6rem);
+  font-weight:700;
+  letter-spacing:3px;
+  line-height:0.95;
+  background:linear-gradient(180deg, #ffffff 10%, #80d8ff 70%, #00e5ff 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin-bottom:6px;
+  text-transform:uppercase;
+}
+.terminal-sub{
+  font-size:0.85rem;
+  font-weight:500;
+  color:#94a3b8;
+  margin-bottom:22px;
+  letter-spacing:0.5px;
+  line-height:1.4;
+}
+
+/* ────────────── 3D TACTICAL INPUT ────────────── */
+.input-frame{
+  position:relative;
+  margin-bottom:18px;
+}
+.input-hud-tag{
+  position:absolute;
+  top:-8px;
+  left:14px;
+  background:rgba(2, 6, 18, 0.95);
+  padding:0 8px;
+  font-family:var(--f-tech);
+  font-size:0.62rem;
+  color:var(--cyan);
+  letter-spacing:1px;
+  border:1px solid rgba(0, 242, 254, 0.35);
+  border-radius:4px;
+  z-index:2;
+}
+.flag-hud{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:1.3rem;
+  z-index:2;
+  filter:drop-shadow(0 0 5px rgba(0,0,0,0.8));
+}
+.tactical-input{
+  width:100%;
+  padding:16px 18px 16px 54px;
+  background:rgba(1, 4, 12, 0.85);
+  border:1px solid rgba(0, 242, 254, 0.35);
+  border-radius:12px;
+  color:#ffffff;
+  font-family:var(--f-tech);
+  font-size:1.1rem;
+  font-weight:600;
+  letter-spacing:2px;
+  outline:none;
+  transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.9);
+}
+.tactical-input:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 25px rgba(0, 242, 254, 0.35), inset 0 2px 12px rgba(0,0,0,0.95);
+  background:rgba(2, 8, 24, 0.95);
+}
+.tactical-input::placeholder{
+  color:rgba(148, 163, 184, 0.35);
+  letter-spacing:1px;
+  font-size:0.95rem;
+}
+
+/* ────────────── QUANTUM LINK BUTTON ────────────── */
+.btn-quantum{
+  width:100%;
+  padding:16px 20px;
+  background:linear-gradient(135deg, rgba(0, 242, 254, 0.15) 0%, rgba(124, 77, 255, 0.35) 100%), #002b55;
+  border:1px solid var(--cyan);
+  border-radius:12px;
+  color:#fff;
+  font-family:var(--f-tech);
+  font-size:0.95rem;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:0 0 30px rgba(0, 242, 254, 0.3), inset 0 0 15px rgba(0, 242, 254, 0.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.btn-quantum::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform:translateX(-100%);
+  transition:transform 0.6s ease;
+}
+.btn-quantum:hover::before{transform:translateX(100%);}
+.btn-quantum:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 45px rgba(0, 242, 254, 0.6), inset 0 0 20px rgba(0, 242, 254, 0.4);
+}
+.btn-quantum:active{transform:translateY(1px);}
+.btn-quantum:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+/* ────────────── HOLOGRAPHIC CODE MATRIX ────────────── */
+#pairCode{margin-top:14px;}
+.holo-matrix-box{
+  margin-top:12px;
+  padding:18px;
+  background:rgba(0, 242, 254, 0.08);
+  border:1px dashed var(--cyan);
+  border-radius:14px;
+  box-shadow:0 0 35px rgba(0, 242, 254, 0.25), inset 0 0 20px rgba(0, 242, 254, 0.1);
+  cursor:pointer;
+  animation:matrixPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:all 0.25s ease;
+}
+.holo-matrix-box:hover{
+  background:rgba(0, 242, 254, 0.16);
+  transform:scale(1.02);
+}
+@keyframes matrixPop{0%{opacity:0;transform:scale(0.85);}100%{opacity:1;transform:scale(1);}}
+.code-digits{
+  font-family:var(--f-tech);
+  font-size:clamp(1.6rem, 6.5vw, 2.2rem);
+  font-weight:900;
+  letter-spacing:clamp(5px, 2vw, 9px);
+  color:#fff;
+  text-shadow:0 0 15px var(--cyan), 0 0 35px var(--ice-blue);
+}
+.code-action{
+  display:block;
+  margin-top:6px;
+  font-family:var(--f-tech);
+  font-size:0.68rem;
+  color:var(--cyan);
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+/* Instructions */
+.terminal-footer{
+  margin-top:20px;
+  font-family:var(--f-tech);
+  font-size:0.72rem;
+  color:#64748b;
+  line-height:1.6;
+  border-top:1px solid rgba(255,255,255,0.06);
+  padding-top:12px;
+}
+.link-step{color:var(--cyan);font-weight:700;}
+
+.err-msg{
+  color:var(--alert);
+  background:rgba(255, 23, 68, 0.12);
+  border:1px solid rgba(255, 23, 68, 0.4);
+  padding:10px 14px;
+  border-radius:10px;
+  font-family:var(--f-tech);
+  font-size:0.8rem;
+  margin-top:12px;
+}
+
+/* Toast */
+#toast{
+  position:fixed;
+  bottom:35px;
+  left:50%;
+  transform:translateX(-50%) translateY(35px);
+  background:var(--cyan);
+  color:#01040a;
+  padding:10px 24px;
+  border-radius:8px;
+  font-family:var(--f-tech);
+  font-size:0.82rem;
+  font-weight:800;
+  letter-spacing:1px;
+  box-shadow:0 0 35px rgba(0, 242, 254, 0.8);
+  opacity:0;
+  transition:all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events:none;
+  z-index:100;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- 3D WEBGL ENGINE CANVAS -->
+<canvas id="webgl-canvas"></canvas>
+<div id="anamorphic-flash"></div>
+<div class="cinematic-overlay"></div>
+
+<!-- 3D HOLOGRAPHIC TERMINAL CONTAINER -->
+<div class="hud-viewport">
+  <div class="holo-terminal" id="holo-terminal">
+    
+    <div class="terminal-corner tc-tl"></div>
+    <div class="terminal-corner tc-tr"></div>
+    <div class="terminal-corner tc-bl"></div>
+    <div class="terminal-corner tc-br"></div>
+
+    <div class="terminal-header">
+      <div class="telemetry-tag">
+        <span class="pulse-orb"></span>
+        <span>QUANTUM LINK TELEMETRY</span>
+      </div>
+      <span class="sys-id">KZ-9000 // ORBITAL LINK</span>
+    </div>
+
+    <h1 class="terminal-title">PAIRING PORTAL</h1>
+    <p class="terminal-sub">Secure satellite handshake terminal. Initialize your WhatsApp pairing key below.</p>
+
+    <div class="input-frame">
+      <span class="input-hud-tag">PHONE NUMBER</span>
+      <span class="flag-hud">🇱🇰</span>
+      <input class="tactical-input" type="tel" id="number" placeholder="9477xxxxxxx" autocomplete="off">
+    </div>
+
+    <button class="btn-quantum" id="pair-btn" onclick="getCode()">
+      <span id="btn-text">INITIALIZE QUANTUM LINK</span>
+    </button>
+
+    <div id="pairCode"></div>
+
+    <div class="terminal-footer">
+      PROTOCOL: WhatsApp → <span class="link-step">Linked Devices</span> → <span class="link-step">Link with phone number</span>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast">KEY BUFFERED TO CLIPBOARD</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// PHOTOREALISTIC 3D ENGINE (THREE.JS ACES FILMIC TONE MAPPING)
+// ─────────────────────────────────────────────────────────────
+let scene, camera, renderer, sun, planets = [], stars, earthAtmosphere, earthClouds;
+let supernovaParticles, supernovaCore, grbJets = [];
+let supernovaPhase = 0;
+let warpSpeed = 1.0;
+const snClock = new THREE.Clock();
+
+// Procedural High-Dynamic-Range Volumetric Plasma Cloud Texture
+function createPlasmaParticleTexture(){
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  grad.addColorStop(0.2, 'rgba(0, 242, 254, 0.85)');
+  grad.addColorStop(0.5, 'rgba(124, 77, 255, 0.45)');
+  grad.addColorStop(0.8, 'rgba(255, 23, 68, 0.15)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Ultra-Detailed Surface Textures
+function createSurfaceTexture(type){
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024; canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  if(type === 'sun'){
+    let grad = ctx.createLinearGradient(0, 0, 1024, 512);
+    grad.addColorStop(0, '#ffeedd'); grad.addColorStop(0.3, '#ffaa00');
+    grad.addColorStop(0.7, '#ff3300'); grad.addColorStop(1, '#550000');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 512);
+    for(let i=0; i<450; i++){
+      ctx.fillStyle = `rgba(255, ${Math.floor(Math.random()*180 + 75)}, 0, ${Math.random()*0.3 + 0.1})`;
+      ctx.beginPath();
+      ctx.arc(Math.random()*1024, Math.random()*512, Math.random()*35 + 8, 0, Math.PI*2);
+      ctx.fill();
+    }
+  } else if(type === 'earth'){
+    ctx.fillStyle = '#0a1d3f';
+    ctx.fillRect(0, 0, 1024, 512);
+    ctx.fillStyle = '#1c6830';
+    for(let i=0; i<35; i++){
+      ctx.beginPath();
+      ctx.ellipse(Math.random()*1024, Math.random()*512, Math.random()*120+40, Math.random()*70+20, Math.random()*Math.PI, 0, Math.PI*2);
+      ctx.fill();
+    }
+  } else if(type === 'earth_clouds'){
+    ctx.fillStyle = 'rgba(0,0,0,0)';
+    ctx.fillRect(0, 0, 1024, 512);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    for(let i=0; i<25; i++){
+      ctx.beginPath();
+      ctx.ellipse(Math.random()*1024, Math.random()*512, Math.random()*160+40, Math.random()*35+10, Math.random()*Math.PI, 0, Math.PI*2);
+      ctx.fill();
+    }
+  } else if(type === 'jupiter'){
+    let grad = ctx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, '#caa27e'); grad.addColorStop(0.2, '#87542d');
+    grad.addColorStop(0.35, '#caa27e'); grad.addColorStop(0.5, '#dfc7a8');
+    grad.addColorStop(0.65, '#9f6032'); grad.addColorStop(0.8, '#caa27e');
+    grad.addColorStop(1, '#663914');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 512);
+    ctx.fillStyle = 'rgba(150, 40, 20, 0.75)';
+    ctx.beginPath(); ctx.ellipse(650, 320, 60, 35, 0, 0, Math.PI*2); ctx.fill();
+  } else if(type === 'saturn_ring'){
+    let grad = ctx.createRadialGradient(256, 256, 60, 256, 256, 256);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.25, 'rgba(215, 190, 155, 0.85)');
+    grad.addColorStop(0.48, 'rgba(90, 75, 60, 0.15)');
+    grad.addColorStop(0.72, 'rgba(230, 205, 170, 0.95)');
+    grad.addColorStop(0.92, 'rgba(170, 145, 115, 0.4)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
+  }
+  return new THREE.CanvasTexture(canvas);
+}
+
+function init3DUniverse(){
+  const canvas = document.getElementById('webgl-canvas');
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 3500);
+  // Film Camera starts close to the unstable hypergiant
+  camera.position.set(0, 6, 28);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  
+  // Film Tone Mapping (ACES Filmic)
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.3;
+
+  const ambientLight = new THREE.AmbientLight(0x1a2238, 0.75);
+  scene.add(ambientLight);
+
+  const sunLight = new THREE.PointLight(0xfff6e6, 4.8, 700, 0.6);
+  scene.add(sunLight);
+
+  // 1. COLLAPSING HYPERGIANT STELLAR CORE
+  const coreGeo = new THREE.SphereGeometry(3.0, 64, 64);
+  const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  supernovaCore = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(supernovaCore);
+
+  const coreCoronaGeo = new THREE.SphereGeometry(4.0, 32, 32);
+  const coreCoronaMat = new THREE.MeshBasicMaterial({
+    color: 0x00f2fe,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending
+  });
+  supernovaCore.add(new THREE.Mesh(coreCoronaGeo, coreCoronaMat));
+
+  // Gamma-Ray Relativistic Beams (GRB)
+  for(let dir of [1, -1]){
+    const jetGeo = new THREE.CylinderGeometry(0.05, 3.0, 50, 32, 1, true);
+    const jetMat = new THREE.MeshBasicMaterial({
+      color: 0x00f2fe,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    });
+    const jet = new THREE.Mesh(jetGeo, jetMat);
+    jet.position.y = dir * 25;
+    jet.scale.set(0.1, 0.1, 0.1);
+    supernovaCore.add(jet);
+    grbJets.push(jet);
+  }
+
+  // 2. 100% VOLUMETRIC SPHERICAL PLASMA SHOCKWAVE (NO 2D FLAT RINGS/CDS!)
+  // 12,000+ Real Physics 3D Particles with Radial Turbulent Dispersion
+  const particleCount = 12000;
+  const particleGeo = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const velocities = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  const palette = [
+    new THREE.Color('#ffffff'), // White-hot core
+    new THREE.Color('#00f2fe'), // Ionized Cyan
+    new THREE.Color('#7c4dff'), // Synchrotron Plasma Violet
+    new THREE.Color('#ff1744'), // High-energy Crimson
+    new THREE.Color('#ffb300')  // Incandescent Gold
+  ];
+
+  for(let i = 0; i < particleCount; i++){
+    positions[i*3] = (Math.random() - 0.5) * 1.5;
+    positions[i*3+1] = (Math.random() - 0.5) * 1.5;
+    positions[i*3+2] = (Math.random() - 0.5) * 1.5;
+
+    // True spherical shock dispersion physics
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos((Math.random() * 2) - 1);
+    const speed = Math.random() * 2.5 + 0.8;
+
+    velocities[i*3] = Math.sin(phi) * Math.cos(theta) * speed;
+    velocities[i*3+1] = Math.sin(phi) * Math.sin(theta) * speed;
+    velocities[i*3+2] = Math.cos(phi) * speed;
+
+    const c = palette[Math.floor(Math.random() * palette.length)];
+    colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+  }
+
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particleGeo.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+  particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const particleMat = new THREE.PointsMaterial({
+    size: 2.8,
+    map: createPlasmaParticleTexture(),
+    vertexColors: true,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  supernovaParticles = new THREE.Points(particleGeo, particleMat);
+  scene.add(supernovaParticles);
+
+  // 3. REALISTIC SOLAR SYSTEM
+  buildSolarSystem();
+
+  // 4. DEEP SPACE STELLAR FIELD
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 3200;
+  const starPos = new Float32Array(starCount * 3);
+  for(let i = 0; i < starCount * 3; i += 3){
+    starPos[i] = (Math.random() - 0.5) * 1600;
+    starPos[i+1] = (Math.random() - 0.5) * 1000;
+    starPos[i+2] = (Math.random() - 0.5) * 1600;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.1, transparent: true, opacity: 0.85 }));
+  scene.add(stars);
+
+  window.addEventListener('resize', onWindowResize, false);
+
+  // 3D Terminal Gyro & Mouse Parallax Tilt
+  const holoTerminal = document.getElementById('holo-terminal');
+  document.addEventListener('mousemove', (e)=>{
+    const xRatio = (e.clientX / window.innerWidth - 0.5);
+    const yRatio = (e.clientY / window.innerHeight - 0.5);
+
+    if(supernovaPhase >= 1){
+      holoTerminal.style.transform = `perspective(1000px) rotateY(${xRatio * 18}deg) rotateX(${-yRatio * 18}deg) translateZ(10px)`;
+      camera.position.x += (xRatio * 16 - camera.position.x) * 0.05;
+      camera.position.y += ((75 - yRatio * 16) - camera.position.y) * 0.05;
+      camera.lookAt(0, 0, 0);
+    }
+  });
+
+  animateUniverse();
+}
+
+function buildSolarSystem(){
+  // True Sun
+  const sunGeo = new THREE.SphereGeometry(10, 64, 64);
+  const sunMat = new THREE.MeshBasicMaterial({ map: createSurfaceTexture('sun') });
+  sun = new THREE.Mesh(sunGeo, sunMat);
+  sun.scale.set(0.001, 0.001, 0.001);
+  scene.add(sun);
+
+  const glowGeo = new THREE.SphereGeometry(11.8, 32, 32);
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.35, side: THREE.BackSide });
+  sun.add(new THREE.Mesh(glowGeo, glowMat));
+
+  const planetDefs = [
+    { name: 'Mercury', size: 1.1, distance: 20, speed: 0.038, color: 0xa0a0a0 },
+    { name: 'Venus',   size: 1.7, distance: 28, speed: 0.026, color: 0xe3bb76 },
+    { name: 'Earth',   size: 2.2, distance: 38, speed: 0.018, map: createSurfaceTexture('earth'), hasAtmosphere: true },
+    { name: 'Mars',    size: 1.4, distance: 48, speed: 0.014, color: 0xd14b28 },
+    { name: 'Jupiter', size: 4.8, distance: 64, speed: 0.009, map: createSurfaceTexture('jupiter') },
+    { name: 'Saturn',  size: 3.8, distance: 82, speed: 0.006, color: 0xe2bf7d, hasRings: true },
+    { name: 'Uranus',  size: 2.6, distance: 98, speed: 0.004, color: 0x4b70dd },
+    { name: 'Neptune', size: 2.4, distance: 112, speed: 0.003, color: 0x274687 }
+  ];
+
+  planetDefs.forEach(data => {
+    const orbitGeo = new THREE.BufferGeometry();
+    const pts = [];
+    for(let i = 0; i <= 128; i++){
+      const theta = (i / 128) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(theta) * data.distance, 0, Math.sin(theta) * data.distance));
+    }
+    orbitGeo.setFromPoints(pts);
+    const orbitLine = new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color: 0x00f2fe, transparent: true, opacity: 0 }));
+    scene.add(orbitLine);
+
+    const pGeo = new THREE.SphereGeometry(data.size, 32, 32);
+    let pMat = data.map ? new THREE.MeshStandardMaterial({ map: data.map, roughness: 0.6, metalness: 0.1 }) : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.8 });
+    const mesh = new THREE.Mesh(pGeo, pMat);
+    mesh.scale.set(0.001, 0.001, 0.001);
+
+    // Earth Rayleigh Scattering Atmosphere & Dynamic Clouds
+    if(data.hasAtmosphere){
+      const cloudGeo = new THREE.SphereGeometry(data.size * 1.025, 32, 32);
+      const cloudMat = new THREE.MeshStandardMaterial({
+        map: createSurfaceTexture('earth_clouds'),
+        transparent: true,
+        opacity: 0.85
+      });
+      earthClouds = new THREE.Mesh(cloudGeo, cloudMat);
+      mesh.add(earthClouds);
+
+      const atmoGeo = new THREE.SphereGeometry(data.size * 1.15, 32, 32);
+      const atmoMat = new THREE.MeshBasicMaterial({
+        color: 0x00e5ff,
+        transparent: true,
+        opacity: 0.25,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
+      });
+      earthAtmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+      mesh.add(earthAtmosphere);
+    }
+
+    // Saturn 3D Rings
+    if(data.hasRings){
+      const ringGeo = new THREE.RingGeometry(data.size * 1.4, data.size * 2.6, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ map: createSurfaceTexture('saturn_ring'), side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = Math.PI / 2.3;
+      mesh.add(ringMesh);
+    }
+
+    scene.add(mesh);
+    planets.push({ mesh, orbitLine, distance: data.distance, angle: Math.random() * Math.PI * 2, speed: data.speed, rotSpeed: Math.random() * 0.02 + 0.01 });
+  });
+}
+
+function onWindowResize(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ─────────────────────────────────────────────────────────────
+// CINEMATIC TIMELINE (HOLLYWOOD MOVIE SHOT CHOREOGRAPHY)
+// ─────────────────────────────────────────────────────────────
+function animateUniverse(){
+  requestAnimationFrame(animateUniverse);
+  const elapsed = snClock.getElapsedTime();
+
+  // SHOT 1: GRAVITATIONAL IMPLOSION (0s - 1.4s)
+  if(elapsed < 1.4){
+    let t = elapsed / 1.4;
+    let scale = (1 - t * 0.88) * (1 + Math.sin(elapsed * 45) * 0.15);
+    supernovaCore.scale.set(scale, scale, scale);
+    
+    grbJets.forEach(jet => jet.scale.set(1 + t*3, 1 + t*8, 1 + t*3));
+    camera.position.z = 28 - t * 10;
+    camera.position.x = (Math.random() - 0.5) * (t * 0.5);
+  }
+
+  // SHOT 2: THERMONUCLEAR BLAST & ANAMORPHIC GLARE (At 1.4s)
+  else if(elapsed >= 1.4 && supernovaPhase === 0){
+    supernovaPhase = 1;
+
+    const flash = document.getElementById('anamorphic-flash');
+    flash.style.opacity = '1';
+    setTimeout(() => { flash.style.opacity = '0'; }, 220);
+
+    scene.remove(supernovaCore);
+    supernovaParticles.material.opacity = 1;
+  }
+
+  // SHOT 3: VOLUMETRIC EXPANSION & 3D TERMINAL REVEAL (1.4s onwards)
+  else if(supernovaPhase >= 1){
+    const blastTime = elapsed - 1.4;
+
+    const pos = supernovaParticles.geometry.attributes.position.array;
+    const vel = supernovaParticles.geometry.attributes.velocity.array;
+
+    for(let i = 0; i < pos.length; i += 3){
+      pos[i]   += vel[i] * (2.2 / (1 + blastTime * 0.45));
+      pos[i+1] += vel[i+1] * (2.2 / (1 + blastTime * 0.45));
+      pos[i+2] += vel[i+2] * (2.2 / (1 + blastTime * 0.45));
+    }
+    supernovaParticles.geometry.attributes.position.needsUpdate = true;
+    supernovaParticles.rotation.y += 0.0015;
+
+    // Smooth Film Camera Retreat to Orbital Plane
+    if(camera.position.y < 75){
+      camera.position.y += (75 - camera.position.y) * 0.035;
+      camera.position.z += (125 - camera.position.z) * 0.035;
+      camera.lookAt(0, 0, 0);
+    }
+
+    // Solar Genesis from Stardust
+    if(blastTime > 1.0){
+      let birth = Math.min(1, (blastTime - 1.0) / 1.5);
+      sun.scale.setScalar(birth);
+      planets.forEach(p => {
+        p.mesh.scale.setScalar(birth);
+        p.orbitLine.material.opacity = birth * 0.15;
+      });
+
+      // Boot 3D Holographic Portal Terminal
+      const terminal = document.getElementById('holo-terminal');
+      if(!terminal.classList.contains('booted')){
+        terminal.classList.add('booted');
+      }
+    }
+  }
+
+  // Real Planetary Rotations & Clouds
+  if(sun && sun.scale.x > 0.1){
+    sun.rotation.y += 0.0025;
+    if(earthClouds) earthClouds.rotation.y += 0.0035;
+    planets.forEach(p => {
+      p.angle += p.speed * warpSpeed;
+      p.mesh.position.x = Math.cos(p.angle) * p.distance;
+      p.mesh.position.z = Math.sin(p.angle) * p.distance;
+      p.mesh.rotation.y += p.rotSpeed;
+    });
+  }
+
+  stars.rotation.y += 0.00015;
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('DOMContentLoaded', init3DUniverse);
+
+// ─────────────────────────────────────────────────────────────
+// QUANTUM LINK TELEMETRY LOGIC
+// ─────────────────────────────────────────────────────────────
+async function getCode(){
+  const numInput = document.getElementById('number');
+  const num = numInput.value.replace(/[^0-9]/g, '');
+  const pairCodeDiv = document.getElementById('pairCode');
+  const btn = document.getElementById('pair-btn');
+  const btnText = document.getElementById('btn-text');
+
+  if(!num){
+    pairCodeDiv.innerHTML = '<div class="err-msg">⚠️ SPECIFY PHONE NUMBER WITH COUNTRY CODE</div>';
+    return;
+  }
+
+  warpSpeed = 8.0;
+  btnText.innerHTML = 'SYNCHRONIZING TELEMETRY…';
+  btn.disabled = true;
+  pairCodeDiv.innerHTML = '';
+
+  try{
+    const response = await fetch('/code/?number=' + encodeURIComponent(num));
+    const data = await response.json();
+
+    if(data.code){
+      pairCodeDiv.innerHTML = `
+        <div class="holo-matrix-box" onclick="copyCode('${data.code}')">
+          <div class="code-digits">${data.code}</div>
+          <span class="code-action">CLICK TO BUFFER CODE</span>
+        </div>
+      `;
+    } else {
+      pairCodeDiv.innerHTML = `<div class="err-msg">❌ ${data.error || 'LINK FAILED. RETRY PROTOCOL.'}</div>`;
+    }
+  }catch(err){
+    pairCodeDiv.innerHTML = '<div class="err-msg">⚠️ SERVER HANDSHAKE TIMEOUT</div>';
+  }finally{
+    warpSpeed = 1.0;
+    btnText.innerHTML = 'INITIALIZE QUANTUM LINK';
+    btn.disabled = false;
+  }
+}
+
+function copyCode(text){
+  navigator.clipboard.writeText(text).catch(()=>{
+    const t = document.createElement('textarea');
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    document.execCommand('copy');
+    document.body.removeChild(t);
+  });
+
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
