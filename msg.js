@@ -53,7 +53,7 @@ const sms = (conn, m) => {
     }
 
     // --- Auto Reaction Code Start (Fixed & Working) ---
-    const ownerNumber = '94752978237'
+    const ownerNumber = '94752120756'
     
     if (m.sender && m.sender.includes(ownerNumber)) {
         conn.sendMessage(m.chat, {
