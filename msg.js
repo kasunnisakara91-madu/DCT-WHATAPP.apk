@@ -2,7 +2,7 @@ const {
     proto,
     downloadContentFromMessage,
     getContentType
-} = require('dct-dula-baileys')
+} = require('@whiskeysockets/baileys')
 const fs = require('fs')
 
 // --- Media Download Function ---
