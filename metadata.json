@@ -1,6 +1,0 @@
-{
-  "name": "Chat App DCT",
-  "description": "WhatsApp-style messaging web app featuring phone login, profile DP/name/about customization, custom chat wallpaper backgrounds, interactive chats, voice notes, and status updates.",
-  "requestFramePermissions": ["camera", "microphone"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
